@@ -1,8 +1,9 @@
 package swing;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public class Message {
+public class Message implements Serializable {
     private String userFrom;
 
     private String userTo;
@@ -31,5 +32,15 @@ public class Message {
 
     public LocalDate getDate() {
         return date;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "userFrom='" + userFrom + '\'' +
+                ", userTo='" + userTo + '\'' +
+                ", text='" + text + '\'' +
+                ", date=" + date +
+                '}';
     }
 }

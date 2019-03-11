@@ -1,6 +1,7 @@
 package swing;
 
 import javax.swing.*;
+import java.io.IOException;
 
 public class App {
     private static MainWindow mainWindow;
@@ -9,7 +10,11 @@ public class App {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                mainWindow = new MainWindow();
+                try {
+                    mainWindow = new MainWindow();
+                } catch (IOException | ClassNotFoundException e){
+                    System.out.println(e.getMessage());
+                }
             }
         });
     }

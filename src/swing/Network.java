@@ -3,10 +3,7 @@ package swing;
 import server.ClientHandler;
 
 import javax.swing.*;
-import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +47,12 @@ public class Network implements Closeable {
                                     Message msg = new Message(matcher.group(1), username,
                                             matcher.group(2));
                                     messageSender.submitMessage(msg);
+
+                                    try {
+                                        saveMessageToFile(msg);
+                                    } catch (IOException e){
+                                        System.out.println("Ошибка записи в файл");
+                                    }
                                 }
                             }
                         });
@@ -59,6 +62,17 @@ public class Network implements Closeable {
                 }
             }
         });
+    }
+
+    public void saveMessageToFile(Message message) throws IOException {
+            ObjectOutputStream outFile = new ObjectOutputStream(new FileOutputStream(this.username + ".txt", true));
+            outFile.writeObject(message);
+            outFile.flush();
+            outFile.close();
+    }
+
+    public void readMessageFromFile() {
+
     }
 
     public void sendMessageToUser(Message message) {
@@ -87,6 +101,21 @@ public class Network implements Closeable {
             receiver.start();
         } else {
             throw new AuthException();
+        }
+    }
+
+    public void getFile() throws IOException, ClassNotFoundException {
+        File file = new File(this.username + ".txt");
+
+        if (file.exists()) {
+            ObjectInputStream inFile = new ObjectInputStream(new FileInputStream(this.username + ".txt"));
+            Message m1 = (Message) inFile.readObject();
+            Message m2 = (Message) inFile.readObject();
+            Message m3 = (Message) inFile.readObject();
+            System.out.println("ПРочитано из файла! " + m1);
+            System.out.println("ПРочитано из файла! " + m2);
+            System.out.println("ПРочитано из файла! " + m3);
+            inFile.close();
         }
     }
 
