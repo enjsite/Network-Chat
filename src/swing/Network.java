@@ -3,11 +3,9 @@ package swing;
 import server.ClientHandler;
 
 import javax.swing.*;
-import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,6 +23,7 @@ public class Network implements Closeable {
     private String username;
     private final String hostName;
     private final int port;
+    private HistoryStore historyStore;
 
     public Network(String hostName, int port, MessageSender messageSender) {
         this.hostName = hostName;
@@ -49,7 +48,9 @@ public class Network implements Closeable {
                                 if (matcher.matches()) {
                                     Message msg = new Message(matcher.group(1), username,
                                             matcher.group(2));
+                                    historyStore.saveRecord(msg);
                                     messageSender.submitMessage(msg);
+
                                 }
                             }
                         });
@@ -61,9 +62,14 @@ public class Network implements Closeable {
         });
     }
 
-    public void sendMessageToUser(Message message) {
+    public List<Message> getHistory() {
+        return historyStore.getLastMessages();
+    }
 
+    public void sendMessageToUser(Message message) {
         sendMessage(String.format(MESSAGE_SEND_PATTERN, message.getUserTo(), message.getText()));
+        historyStore.saveRecord(message);
+        //messageSender.submitMessage(message);
     }
 
     private void sendMessage(String msg) {
@@ -84,6 +90,7 @@ public class Network implements Closeable {
         String response = in.readUTF();
         if (response.equals("/auth successful")) {
             this.username = username;
+            historyStore = new HistoryStore(username);
             receiver.start();
         } else {
             throw new AuthException();

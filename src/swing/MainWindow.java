@@ -3,7 +3,8 @@ package swing;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
+import java.io.*;
+import java.util.Observable;
 
 public class MainWindow extends JFrame implements MessageSender {
     private JTextField textField;
@@ -46,7 +47,7 @@ public class MainWindow extends JFrame implements MessageSender {
         }
     }
 
-    public MainWindow() {
+    public MainWindow() throws IOException, ClassNotFoundException {
         setTitle("Сетевой чат");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setBounds(200, 200, 500, 500);
@@ -107,10 +108,7 @@ public class MainWindow extends JFrame implements MessageSender {
 
         network = new Network("localhost", 7777, this);
 
-
-
         LoginDialog loginDialog = new LoginDialog(this, network);
-
 
         loginDialog.setVisible(true);
 
@@ -119,6 +117,8 @@ public class MainWindow extends JFrame implements MessageSender {
         }
 
         setTitle("Сетевой чат. Пользователь " + network.getUsername());
+        // TODO реализовать подгрузку истории
+        //messageListModel.addAll(network.getHistory());
     }
 
     @Override
