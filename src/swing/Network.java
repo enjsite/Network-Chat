@@ -5,6 +5,7 @@ import server.ClientHandler;
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +23,7 @@ public class Network implements Closeable {
     private String username;
     private final String hostName;
     private final int port;
+    private HistoryStore historyStore;
 
     public Network(String hostName, int port, MessageSender messageSender) {
         this.hostName = hostName;
@@ -46,13 +48,9 @@ public class Network implements Closeable {
                                 if (matcher.matches()) {
                                     Message msg = new Message(matcher.group(1), username,
                                             matcher.group(2));
+                                    historyStore.saveRecord(msg);
                                     messageSender.submitMessage(msg);
 
-                                    try {
-                                        saveMessageToFile(msg);
-                                    } catch (IOException e){
-                                        System.out.println("Ошибка записи в файл");
-                                    }
                                 }
                             }
                         });
@@ -64,20 +62,14 @@ public class Network implements Closeable {
         });
     }
 
-    public void saveMessageToFile(Message message) throws IOException {
-            ObjectOutputStream outFile = new ObjectOutputStream(new FileOutputStream(this.username + ".txt", true));
-            outFile.writeObject(message);
-            outFile.flush();
-            outFile.close();
-    }
-
-    public void readMessageFromFile() {
-
+    public List<Message> getHistory() {
+        return historyStore.getLastMessages();
     }
 
     public void sendMessageToUser(Message message) {
-
         sendMessage(String.format(MESSAGE_SEND_PATTERN, message.getUserTo(), message.getText()));
+        historyStore.saveRecord(message);
+        //messageSender.submitMessage(message);
     }
 
     private void sendMessage(String msg) {
@@ -98,24 +90,10 @@ public class Network implements Closeable {
         String response = in.readUTF();
         if (response.equals("/auth successful")) {
             this.username = username;
+            historyStore = new HistoryStore(username);
             receiver.start();
         } else {
             throw new AuthException();
-        }
-    }
-
-    public void getFile() throws IOException, ClassNotFoundException {
-        File file = new File(this.username + ".txt");
-
-        if (file.exists()) {
-            ObjectInputStream inFile = new ObjectInputStream(new FileInputStream(this.username + ".txt"));
-            Message m1 = (Message) inFile.readObject();
-            Message m2 = (Message) inFile.readObject();
-            Message m3 = (Message) inFile.readObject();
-            System.out.println("ПРочитано из файла! " + m1);
-            System.out.println("ПРочитано из файла! " + m2);
-            System.out.println("ПРочитано из файла! " + m3);
-            inFile.close();
         }
     }
 
