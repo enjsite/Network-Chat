@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,13 +21,16 @@ public class ChatServer {
     private AuthService authService = new AuthServiceImpl();
 
     private Map<String, ClientHandler> clientHandlerMap = Collections.synchronizedMap(new HashMap<>());
+    private ExecutorService executorService;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         ChatServer chatServer = new ChatServer();
         chatServer.start(7777);
     }
 
-    public void start(int port) {
+    public void start(int port) throws Exception {
+        executorService = Executors.newCachedThreadPool();
+
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server started!");
             while (true) {
@@ -63,6 +68,8 @@ public class ChatServer {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            executorService.shutdown();
         }
     }
 
@@ -73,5 +80,9 @@ public class ChatServer {
         } else {
             System.out.printf("User %s not found. Message from %s is lost.%n", userTo, userFrom);
         }
+    }
+
+    public ExecutorService getExecutorService(){
+        return executorService;
     }
 }
