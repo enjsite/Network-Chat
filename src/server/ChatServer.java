@@ -15,6 +15,9 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class ChatServer {
     private static final Pattern AUTH_PATTERN = Pattern.compile("^/auth (\\w+) (\\w+)$");
 
@@ -22,6 +25,8 @@ public class ChatServer {
 
     private Map<String, ClientHandler> clientHandlerMap = Collections.synchronizedMap(new HashMap<>());
     private ExecutorService executorService;
+
+    private static final Logger log = LogManager.getLogger(Log4j_Example.class);
 
     public static void main(String[] args) throws Exception {
         ChatServer chatServer = new ChatServer();
@@ -32,12 +37,14 @@ public class ChatServer {
         executorService = Executors.newCachedThreadPool();
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server started!");
+
+            log.info("Server started!");
             while (true) {
                 Socket socket = serverSocket.accept();
                 DataInputStream inp = new DataInputStream(socket.getInputStream());
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                System.out.println("New client connected!");
+
+                log.info("New client connected!");
 
                 try {
                     String authMessage = inp.readUTF();
@@ -49,15 +56,18 @@ public class ChatServer {
                             clientHandlerMap.put(username, new ClientHandler(username, socket, this));
                             out.writeUTF("/auth successful");
                             out.flush();
-                            System.out.printf("Authorization for user %s successful%n", username);
+
+                            log.debug("Authorization for user {} successful", username);
                         } else {
-                            System.out.printf("Authorization for user %s failed%n", username);
+
+                            log.debug("Authorization for user {} failed", username);
                             out.writeUTF("/auth fails");
                             out.flush();
                             socket.close();
                         }
                     } else {
-                        System.out.printf("Incorrect authorization message %s%n", authMessage);
+
+                        log.warn("Incorrect authorization message {}", authMessage);
                         out.writeUTF("/auth fails");
                         out.flush();
                         socket.close();
@@ -78,7 +88,8 @@ public class ChatServer {
         if (userToClientHandler != null) {
             userToClientHandler.sendMessage(userFrom, msg);
         } else {
-            System.out.printf("User %s not found. Message from %s is lost.%n", userTo, userFrom);
+
+            log.warn("User {} not found. Message from {} is lost.", userTo, userFrom);
         }
     }
 
